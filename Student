@@ -1,0 +1,44 @@
+var personOne = (age: 20, name: "Steve", surname: "Jobs")
+var personTwo = (age: 23, name: "Steve", surname: "Wozniak")
+
+
+print("Age of the first person: \(personOne.0)") 
+print("Second persons last name: \(personTwo.2)")
+
+print("First persons name: \(personOne.name)") 
+print("Second persons age: \(personTwo.age)")
+
+
+var studentGrades: [String: Int] = [:]
+
+studentGrades["Steve Jobs"] = 5
+studentGrades["Steve Wozniak"] = 4
+studentGrades["Tim Cook"] = 3
+studentGrades["Ronald Wayne"] = 2
+
+studentGrades["Steve Jobs"]! += 1
+
+for (name, grade) in studentGrades {
+    if grade >= 4 {
+        print("Congratulations to \(name) on passing the exam!")
+    } else if grade >= 3 {
+        print("Congratulations to \(name) on passing the exam!")
+    } else {
+        print("\(name), unfortunately, you need to retake the exam.")
+    }
+}
+
+studentGrades["James A.Bell"] = 4
+studentGrades["Monica Lozano"] = 5
+
+var removedStudent = studentGrades.removeValue(forKey: "Ronald Wayne")
+print("Unfortunately,\(removedStudent) you were expelled for poor academic performance.")
+
+var totalGrade = 0
+for grade in studentGrades.values {
+    totalGrade += grade
+}
+var averageGrade = Double(totalGrade) / Double(studentGrades.count)
+
+print("Group average: \(averageGrade)")
+
