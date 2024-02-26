@@ -1,0 +1,30 @@
+var monthOfYear = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+var daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+for i in 0..<daysInMonth.count {
+  
+  print("\(monthOfYear[i]): \(daysInMonth[i]) days")
+}
+
+
+func isLeapYear(year: Int) -> Bool {
+    if year % 4 != 0 {
+        return false
+    }
+    
+    if year % 100 == 0 && year % 400 != 0 {
+        return false
+    }
+    
+    return true
+}
+
+for (index, month) in monthOfYear.enumerated() {
+    var days = daysInMonth[index]
+    if index == 1 && isLeapYear(year: 2024) {
+        print("There are 29 days in \(month)")
+    } else {
+        print("There are \(days) days in \(month)")
+    }
+}
+
