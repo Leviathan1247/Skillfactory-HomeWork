@@ -1,0 +1,57 @@
+enum CustomError: Error {
+    case error400
+    case error404
+    case error500
+}
+
+func generateError(statusCode: Int) throws {
+    switch statusCode {
+    case 400:
+        throw CustomError.error400
+    case 404:
+        throw CustomError.error404
+    case 500:
+        throw CustomError.error500
+    default:
+        print("Unknown error")
+    }
+}
+
+
+func handleErrors() {
+    let statusCode = 400
+    do {
+        try generateError(statusCode: statusCode)
+        print("No error occurred")
+    } catch CustomError.error400 {
+        print("Error 400: Bad Request")
+    } catch CustomError.error404 {
+        print("Error 404: Not Found")
+    } catch CustomError.error500 {
+        print("Error 500: Internal Server Error")
+    } catch {
+        print("Unknown error occurred")
+    }
+}
+
+handleErrors()
+
+func checkTypes<T, U>(_ a: T, _ b: U) {
+    if type(of: a) == type(of: b) {
+        print("Yes, the types are the same")
+    } else {
+        print("No, the types are different")
+    }
+}
+
+func compareValues<T: Equatable>(_ a: T, _ b: T) -> Bool {
+    return a == b
+}
+
+
+checkTypes(5, 5.0)
+checkTypes("hello", 5)
+
+print(compareValues(5, 5))
+print(compareValues("hello", "developer"))
+
