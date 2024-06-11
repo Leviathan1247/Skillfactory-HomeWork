@@ -1,0 +1,290 @@
+
+
+protocol UserData {
+     var userName: String { get }
+     var userCardId: String { get }   
+     var userCardPin: Int { get }    
+     var userPhone: String { get }     
+     var userCash: Float { get set }   
+     var userBankDeposit: Float { get set }   
+     var userPhoneBalance: Float { get set }    
+     var userCardBalance: Float { get set }
+}
+
+
+enum TextErrors: String {
+    case CARD_NUMBER_OR_PIN_INCORRECT = "Card details entered incorrectly" 
+    case YOU_DONT_HAVE_ENOUGH_CASH = "You don't have enough cash"
+    case YOU_DONT_HAVE_ENOUGH_FINDS_DEPOSIT = "You have insufficient funds on deposit"
+    case ENTERED_INCORRECT_PHONE = "Wrong phone number entered"
+  }
+
+
+
+enum  DescriptionTypesAvailableOperations: String {
+  case balance =  "You have selected operation request balance"
+  case phone = "You have selected the operation to top up phone balance"
+  case withdrawal = "You have selected deposit withdrawal operation"
+  case topUp =  "You have selected deposit replenishment operation"
+}
+
+enum UserActions {
+    case userPressedBalance
+    case userPressedTopUpAccount(topUp: Float)
+    case userPressedWithdrawCashAccount(withdrawCash: Float)
+    case userPressedPayPhone (phone: String)
+}
+
+enum PaymentMethod {
+    case cash(cash: Float)
+    case deposit(deposit: Float)
+}
+
+
+
+class ATM {
+    private let userCardId: String
+    private let userCardPin: Int
+    private var someBank: BankApi
+    private let action: UserActions
+    private let paymentMethod: PaymentMethod?
+    
+    init(userCardId: String, userCardPin: Int, someBank: BankApi, action: UserActions, paymentMethod: PaymentMethod? = nil) {
+        self.userCardId = userCardId
+        self.userCardPin = userCardPin
+        self.someBank = someBank
+        self.action = action 
+        self.paymentMethod = paymentMethod
+        sendUserDataToBank(userCardId: userCardId, userCardPin: userCardPin, actions: action, payment: paymentMethod)
+    }
+    
+    
+    
+    public final func sendUserDataToBank(userCardId: String, userCardPin: Int, actions: UserActions, payment: PaymentMethod?) {
+        let isUserExist = someBank.checkCurrentUser(userCardId: userCardId, userCardPin: userCardPin)
+        if isUserExist { 
+            switch actions {
+            case .userPressedBalance: 
+                someBank.showUserBalance()
+            case let.userPressedPayPhone(phone): 
+                if someBank.checkUserPhone(phone: phone){ 
+                    if let payment = payment { 
+                        switch payment { 
+                        case let .cash(cash: amount): 
+                            if someBank.checkMaxUserCash(cash: amount) {
+                                someBank.topUpPhoneBalanceCash(pay: amount)
+                                someBank.showUserToppedUpMobilePhoneCash(cash: amount)
+                            } else {
+                                someBank.showError(error: .YOU_DONT_HAVE_ENOUGH_CASH)
+                            }
+                        case let .deposit(deposit: amount): 
+                            if someBank.checkMaxAccountDeposit(withdraw: amount) {
+                                someBank.topUpPhoneBalanceDeposit(pay: amount) 
+                                someBank.showUserToppedUpMobilePhoneDeposit(card: amount)
+                            } else { 
+                                someBank.showError(error: .YOU_DONT_HAVE_ENOUGH_FINDS_DEPOSIT)
+                            }
+                        }
+                    }
+                } else {
+                    someBank.showError(error: .ENTERED_INCORRECT_PHONE)
+                }
+                
+            case let .userPressedTopUpAccount(topUp: amount):
+                if someBank.checkMaxUserCash(cash: amount) {
+                    someBank.putCashDeposit(topUp: amount) 
+                    someBank.showTopUpAccount (cash: amount)
+                } else { 
+                    someBank.showError(error: .YOU_DONT_HAVE_ENOUGH_CASH)
+                }
+                
+            case let .userPressedWithdrawCashAccount(withdrawCash):
+                if someBank.checkMaxAccountDeposit(withdraw: withdrawCash) {
+                    someBank.getCashFromDeposit(cash: withdrawCash)
+                    someBank.showWithdrawalDeposit(cash: withdrawCash)
+                } else {
+                    someBank.showError(error: .YOU_DONT_HAVE_ENOUGH_FINDS_DEPOSIT)
+                }
+            } 
+        } else {
+            someBank.showError(error: .CARD_NUMBER_OR_PIN_INCORRECT)
+        }
+    }
+    
+}
+    
+    
+    
+    protocol BankApi {
+          func showUserBalance()
+          func showUserToppedUpMobilePhoneCash(cash: Float)
+          func showUserToppedUpMobilePhoneDeposit(card: Float)
+          func showWithdrawalDeposit(cash: Float)
+          func showTopUpCard(cash: Float)
+          func showTopUpAccount(cash: Float)
+          func showError(error: TextErrors)
+        
+        func checkUserPhone(phone: String) -> Bool
+        func checkMaxUserCash(cash: Float) -> Bool
+        func checkMaxAccountDeposit(withdraw: Float) -> Bool
+        func checkCurrentUser(userCardId: String, userCardPin: Int) -> Bool
+        
+         mutating func topUpPhoneBalanceCash(pay: Float)
+         mutating func topUpPhoneBalanceDeposit(pay: Float)
+         mutating func getCashFromDeposit(cash: Float)
+         mutating func putCashDeposit(topUp: Float)
+    }
+    
+    
+    struct BankServer: BankApi {
+        private var user: UserData
+        init(user: UserData){
+            self.user = user
+        }
+        
+        
+public func showUserBalancel() {
+            let report = """
+Hello, \(user.userName)
+\(DescriptionTypesAvailableOperations.balance.rawValue)
+Your deposit balance is: \(user.userBankDeposit) euro
+Have a nice day!
+"""
+            print (report) 
+        }
+        
+public func showserToppedUpMobilePhoneCash(cash: Float){
+            let report = """
+Hello, \(user.userName)
+\(DescriptionTypesAvailableOperations.phone.rawValue)
+You have topped up your balance with cash in the amount of: \(cash)
+You are left with \(user.userCash) euro cash
+The balance of your phone is:  \(user.userPhoneBalance) euro
+Have a nice day!
+"""
+            print (report)
+        }
+        
+public func showUserToppedUpMobilePhoneDeposit(card deposit: Float){
+            let report = """
+Hello, \(user.userName)
+\(DescriptionTypesAvailableOperations.phone.rawValue)
+You have deposited a balance from deposit funds in the amount of: \(deposit)
+You have a deposit left: \(user.userBankDeposit)
+The balance of your phone is: \(user.userPhoneBalance) euro
+Have a nice day!
+"""
+            print (report)
+        }
+        
+        
+func showWithdrawalDeposit(cash: Float) {
+            let report = """
+Hello,\(user.userName)
+\(DescriptionTypesAvailableOperations.withdrawal.rawValue)
+You have withdrawn funds from the deposit in the amount of: \(cash)
+You have a deposit left: \(user.userBankDeposit) euro
+You have some cash left: \(user.userCash) euro
+Have a nice day!
+"""
+            print (report)
+        }
+        
+        
+func showTopUpAccount (cash: Float) {
+            let report = """
+Hello,\(user.userName)
+\(DescriptionTypesAvailableOperations.topUp.rawValue)
+You have deposited an amount: \(cash)
+The deposit amount is as follows: \(user.userBankDeposit) euro
+You have some cash left: \(user.userCash) euro
+Have a nice day!
+"""
+            print (report)
+        }
+        
+func showError (error: TextErrors) {
+            let report = """
+Hello, \(user.userName)
+Error:\(error.rawValue)
+Have a nice day!
+"""
+            print (report)
+        }
+        
+        
+public mutating func putCashDeposit (topUp: Float) {
+            user.userBankDeposit += topUp
+            user.userCash -= topUp
+        }
+        
+public mutating func getCashFromDeposit (cash: Float) {
+            user.userBankDeposit -= cash
+            user.userCash += cash
+        }
+        
+public mutating func topUpPhoneBalanceCash(pay: Float) {
+            user.userPhoneBalance += pay
+            user.userCash -= pay
+        }
+        
+public mutating func topUpPhoneBalanceDeposit(pay: Float) {
+            user.userPhoneBalance += pay
+            user.userBankDeposit
+        }
+        
+public func checkMaxAccountDeposit(withdraw: Float) -> Bool {
+            return withdraw <= user.userBankDeposit }
+        
+public func checkMaxUserCash(cash: Float) -> Bool {
+            return cash <= user.userCash }
+        
+        
+public func checkUserPhone(phone: String) -> Bool {
+            return phone == user.userPhone }
+        
+public func checkCurrentUser(userCardId: String, userCardPin: Int) -> Bool {
+            return  checkId(id: userCardId, user: user) && checkPin(pin: userCardPin, user: user)}
+        
+        
+private func checkPin(pin: Int, user: UserData) -> Bool {
+            return pin == user.userCardPin }
+        
+        
+private func checkId(id: String, user: UserData) -> Bool { 
+            return id == user.userCardId 
+        }
+    }
+    
+    
+    
+    
+    struct User: UserData {
+        var userName: String 
+        var userCardId: String
+        var userCardPin: Int
+        var userCash: Float
+        var userBankDeposit: Float
+        var userPhone: String
+        var userPhoneBalance: Float
+        var userCardBalance: Float
+    }
+    
+    
+    
+    
+    
+    let steve_Jobs: UserData = User (
+        userName: "Steve Jobs",
+        userCardId: "3483 0982 1204 4287",
+        userCardPin: 9876,
+        userCash: 64736.4,
+        userBankDeposit: 87398.3,
+        userPhone: "+1-800-275-2273",
+        userPhoneBalance: -45.6,
+        userCardBalance: 0.0
+    )
+    
+    let bankClient = BankServer(user: steve_Jobs)
+    
+    let atm666 = ATM(userCardId: "3483 0982 1204 4287", userCardPin: 9876, someBank: bankClient, action: .userPressedPayPhone(phone: "+1-800-275-2273"), paymentMethod: .cash(cash: 5000))
